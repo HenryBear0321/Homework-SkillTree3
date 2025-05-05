@@ -34,42 +34,41 @@ namespace Homework_SkillTree.Controllers
             if (!transactions.Any())
             {
                 GetTransactions();
-                // 將資料存入 ViewBag
-                ViewBag.Transactions = transactions;
             }
 
-            return View();
+            // 初始化 ViewModel
+            var transactionViewModel = new TransactionViewModel
+            {
+                FormModel = new TransactionModel(), // 表單模型
+                Transactions = transactions         // 資料清單
+            };
+
+            return View(transactionViewModel);
         }
 
 
         [HttpPost]
-        public IActionResult Index([FromForm] TransactionModel model)
+        public IActionResult Index(TransactionViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 // 返回原頁面並顯示驗證錯誤
+                //把資料清單指定回model，避免驗證錯誤後無資料
+                model.Transactions = transactions;
+                return View(model);
             } 
-            else
-            {
-                //把資料存入List中
-                transactions.Add(model);
-
-                
-
-                //清空ModelState
-                ModelState.Clear();
-                //清空表單資料
-                model = new TransactionModel();
-            }
+           
+            //把資料存入List中
+            transactions.Add(model.FormModel);
 
 
-            // 將資料存入 ViewBag
-            ViewBag.Transactions = transactions;
 
-            // 返回同一頁面
-            return View();
+            // 清空 ModelState 並重定向到 Index
+            ModelState.Clear();
+            return RedirectToAction("Index");
         }
 
+      
 
         public IActionResult Privacy()
         {
