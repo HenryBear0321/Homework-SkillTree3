@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Transactions;
+using Homework_SkillTree.Data.Repositories;
 using Homework_SkillTree.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,59 +8,49 @@ namespace Homework_SkillTree.Controllers
 {
     public class HomeController : Controller
     {
-        //新增一個List假裝當作資料來源存放TransactionModel
-        private static List<TransactionModel> transactions = new List<TransactionModel>();
-
-        private static void GetTransactions()
-        {
-            transactions.AddRange(new List<TransactionModel>
-                {
-                    new TransactionModel { Category = "支出", Date = DateTime.Parse("2025-01-01"), Money = 300, Description = "備註1" },
-                    new TransactionModel { Category = "支出", Date = DateTime.Parse("2025-01-02"), Money = 1600, Description = "備註2" },
-                    new TransactionModel { Category = "支出", Date = DateTime.Parse("2025-01-03"), Money = 800, Description = "備註3" }
-                });
-        }
-
         private readonly ILogger<HomeController> _logger;
+        private readonly ITransactionRepository _transactionRepository;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, ITransactionRepository transactionRepository)
         {
             _logger = logger;
+            _transactionRepository = transactionRepository;
         }
 
-        public IActionResult Index()
+        public IActionResult Index(int page = 1, string sortColumn = "Date", string sortOrder = "desc")
         {
-            // 模擬資料
-            // 如果靜態清單中沒有資料，才初始化模擬資料
-            if (!transactions.Any())
-            {
-                GetTransactions();
-            }
+            const int pageSize = 10;
 
-            // 初始化 ViewModel
-            var transactionViewModel = new TransactionViewModel
+            var (data, totalCount) = _transactionRepository.GetAll(page, pageSize, sortColumn, sortOrder);
+
+            var viewModel = new TransactionViewModel
             {
-                FormModel = new TransactionModel(), // 表單模型
-                Transactions = transactions         // 資料清單
+                FormModel = new TransactionModel(),
+                Transactions = data.ToList(),
+                CurrentPage = page,
+                PageSize = pageSize,
+                TotalPages = (int)Math.Ceiling(totalCount / (double)pageSize),
+                SortColumn = sortColumn,
+                SortOrder = sortOrder
             };
 
-            return View(transactionViewModel);
+            return View(viewModel);
         }
 
 
         [HttpPost]
-        public IActionResult Index(TransactionViewModel model)
+        public IActionResult Index(TransactionViewModel model, int page = 1, string sortColumn = "Date", string sortOrder = "desc")
         {
+            const int pageSize = 10;
+
             if (!ModelState.IsValid)
             {
-                // 返回原頁面並顯示驗證錯誤
-                //把資料清單指定回model，避免驗證錯誤後無資料
-                model.Transactions = transactions;
+                model.Transactions = _transactionRepository.GetAll(page, pageSize, sortColumn, sortOrder).Data.ToList();
                 return View(model);
-            } 
-           
+            }
+
             //把資料存入List中
-            transactions.Add(model.FormModel);
+            _transactionRepository.Add(model.FormModel);
 
 
 
