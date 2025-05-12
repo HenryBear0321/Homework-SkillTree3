@@ -14,13 +14,18 @@ namespace Homework_SkillTree.Data.Repositories
             _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
-        public (IEnumerable<TransactionModel> Data, int TotalCount) GetAll(int page, int pageSize, string sortColumn, string sortOrder)
+        public int GetAllCount()
         {
             using var connection = new SqlConnection(_connectionString);
-
             // 計算總記錄數
-            var countSql = "SELECT COUNT(*) FROM AccountBook";
+            var countSql = "SELECT COUNT(*) FROM AccountBook with(nolock)";
             int totalCount = connection.ExecuteScalar<int>(countSql);
+            return totalCount;
+        }
+
+        public IEnumerable<TransactionModel>GetAll(int page, int pageSize, string sortColumn, string sortOrder)
+        {
+            using var connection = new SqlConnection(_connectionString);
 
             // 構建排序 SQL
             var orderBy = sortColumn switch
@@ -35,7 +40,7 @@ namespace Homework_SkillTree.Data.Repositories
                 , Dateee AS Date 
                 , Amounttt AS Money
                 , Remarkkk AS Description 
-                FROM AccountBook
+                FROM AccountBook with(nolock)
                      ORDER BY {orderBy} {sortOrder}
                      OFFSET @Offset ROWS 
                      FETCH NEXT @PageSize ROWS ONLY";
@@ -47,7 +52,7 @@ namespace Homework_SkillTree.Data.Repositories
                 PageSize = pageSize
             });
 
-            return (data, totalCount);
+            return data;
         }
 
         public void Add(TransactionModel transaction)

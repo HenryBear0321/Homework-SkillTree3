@@ -14,16 +14,11 @@ namespace Homework_SkillTree.Services
             _transactionRepository = transactionRepository;
         }
 
-        public (IEnumerable<TransactionModel> Data, int TotalCount) GetTransactions(
-            int page, int pageSize, string sortColumn, string sortOrder)
-        {
-            return _transactionRepository.GetAll(page, pageSize, sortColumn, sortOrder);
-        }
-
         public IPagedList<TransactionModel> GetPagedTransactions(
             int page, int pageSize, string sortColumn, string sortOrder)
         {
-            var (data, totalCount) = _transactionRepository.GetAll(page, pageSize, sortColumn, sortOrder);
+            int totalCount = _transactionRepository.GetAllCount();
+            var data = _transactionRepository.GetAll(page, pageSize, sortColumn, sortOrder);
             return new StaticPagedList<TransactionModel>(data, page, pageSize, totalCount);
         }
 
