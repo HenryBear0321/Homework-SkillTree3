@@ -1,10 +1,13 @@
 using Homework_SkillTree.Data.Repositories;
+using Homework_SkillTree.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddTransient<ITransactionRepository, TransactionRepository>();
+builder.Services.AddTransient<ITransactionService, TransactionService>();
+
 
 var app = builder.Build();
 

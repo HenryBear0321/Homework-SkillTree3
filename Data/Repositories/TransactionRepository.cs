@@ -2,7 +2,6 @@
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Homework_SkillTree.Models;
-using Homework_SkillTree.Data.Repositories;
 
 namespace Homework_SkillTree.Data.Repositories
 {

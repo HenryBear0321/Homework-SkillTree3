@@ -1,8 +1,20 @@
+@using X.PagedList
+@using X.PagedList.Mvc.Core
 @model Homework_SkillTree.Models.TransactionViewModel
 @{
     ViewData["Title"] = "Home Page";
 
-    string GetCategoryName(string category) => category == "0" ? "支出" : "收入";
+    string GetCategory(string category, string type = "class")
+    {
+        switch (type.ToLower())
+        {
+            case "name":
+                return category == "0" ? "支出" : "收入";
+            case "class":
+            default:
+                return category == "0" ? "expense" : "income";
+        }
+    }
 
     string GetSortIcon(string column)
     {
@@ -23,6 +35,15 @@
     }
 }
 
+<style>
+    .expense {
+        color: red;
+    }
+    .income {
+        color: blue;
+    }
+</style>
+
 <div class="container mt-4">
     <div class="card bg-light">
         <div class="card-body">
@@ -41,7 +62,7 @@
                 <div class="row mb-3">
                     <label for="money" class="col-sm-2 col-form-label">金額</label>
                     <div class="col-sm-10">
-                        <input type="text" class="form-control" id="money" placeholder="金額" asp-for="FormModel.Money" value="">
+                        <input type="number" class="form-control" id="money" placeholder="金額" asp-for="FormModel.Money">
                             <span asp-validation-for="FormModel.Money" class="text-danger"></span>
 
                     </div>
@@ -49,7 +70,7 @@
                 <div class="row mb-3">
                     <label for="date" class="col-sm-2 col-form-label">日期</label>
                     <div class="col-sm-10">
-                        <input type="text" class="form-control" id="date" placeholder="日期" asp-for="FormModel.Date" value="">
+                        <input type="date" class="form-control" id="date" placeholder="日期" asp-for="FormModel.Date">
                             <span asp-validation-for="FormModel.Date" class="text-danger"></span>
 
                     </div>
@@ -76,17 +97,17 @@
                     <tr>
                         <th>#</th>
                         <th>
-                            <a href="@Url.Action("Index", new { page = Model.CurrentPage, sortColumn = "Category", sortOrder = GetSortOrder("Category") })" class="text-dark text-decoration-none">
+                            <a href="@Url.Action("Index", new { sortColumn = "Category", sortOrder = GetSortOrder("Category") })" class="text-dark text-decoration-none">
                                 類別 @GetSortIcon("Category")
                             </a>
                         </th>
                         <th>
-                            <a href="@Url.Action("Index", new { page = Model.CurrentPage, sortColumn = "Money", sortOrder = GetSortOrder("Money") })" class="text-dark text-decoration-none">
+                            <a href="@Url.Action("Index", new { sortColumn = "Money", sortOrder = GetSortOrder("Money") })" class="text-dark text-decoration-none">
                                 金額 @GetSortIcon("Money")
                             </a>
                         </th>
                         <th>
-                            <a href="@Url.Action("Index", new { page = Model.CurrentPage, sortColumn = "Date", sortOrder = GetSortOrder("Date") })" class="text-dark text-decoration-none">
+                            <a href="@Url.Action("Index", new { sortColumn = "Date", sortOrder = GetSortOrder("Date") })" class="text-dark text-decoration-none">
                                 日期 @GetSortIcon("Date")
                             </a>
                         </th>
@@ -95,14 +116,18 @@
                 <tbody>
                     @if (Model.Transactions != null && Model.Transactions.Any())
                     {
-                        int index = (Model.CurrentPage - 1) * Model.PageSize;
                         foreach (var transaction in Model.Transactions)
                         {
+                            
                             <tr>
-                                <td>@(++index)</td>
-                                <td>@GetCategoryName(transaction.Category)</td>
-                                <td>@transaction.Money.ToString("###,###,###.##")</td>
-                                <td>@transaction.Date.ToString("yyyy-MM-dd")</td>
+                                <td>@((Model.Transactions.PageNumber - 1) * Model.Transactions.PageSize + Model.Transactions.ToList().IndexOf(transaction) + 1)</td>
+                                <td>
+                                    <span class="@GetCategory(transaction.Category)">
+                                        @GetCategory(transaction.Category, "name")
+                                    </span>
+                                </td>
+                                <td>@(transaction.Money?.ToString("###,###,###.##") ?? "0")</td>
+                                <td>@(transaction.Date?.ToString("yyyy-MM-dd") ?? "")</td>
                             </tr>
                         }
                     }
@@ -115,76 +140,25 @@
                 </tbody>
             </table>
 
-            @if (Model.TotalPages > 1)
+            @* X.PagedList 分頁 *@
+            @if (Model.Transactions != null && Model.Transactions.Any())
             {
-                <nav>
-                    <ul class="pagination justify-content-center">
-                        @{
-                            const int maxVisiblePages = 5;
-                            var startPage = Math.Max(1, Model.CurrentPage - (maxVisiblePages / 2));
-                            var endPage = Math.Min(Model.TotalPages, startPage + maxVisiblePages - 1);
-
-                            if (endPage - startPage + 1 < maxVisiblePages)
-                            {
-                                startPage = Math.Max(1, endPage - maxVisiblePages + 1);
-                            }
-                        }
-
-                        @* 上一頁 *@
-                        <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-                            <a class="page-link" href="@Url.Action("Index", new { page = Model.CurrentPage - 1, sortColumn = Model.SortColumn, sortOrder = Model.SortOrder })">
-                                上一頁
-                            </a>
-                        </li>
-
-                        @* 第一頁 *@
-                        @if (startPage > 1)
-                        {
-                            <li class="page-item">
-                                <a class="page-link" href="@Url.Action("Index", new { page = 1, sortColumn = Model.SortColumn, sortOrder = Model.SortOrder })">1</a>
-                            </li>
-                            @if (startPage > 2)
-                            {
-                                <li class="page-item disabled"><span class="page-link">...</span></li>
-                            }
-                        }
-
-                        @* 中間頁碼 *@
-                        @for (int i = startPage; i <= endPage; i++)
-                        {
-                            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                <a class="page-link" href="@Url.Action("Index", new { page = i, sortColumn = Model.SortColumn, sortOrder = Model.SortOrder })">
-                                    @i
-                                </a>
-                            </li>
-                        }
-
-                        @* 最後頁 *@
-                        @if (endPage < Model.TotalPages)
-                        {
-                            @if (endPage < Model.TotalPages - 1)
-                            {
-                                <li class="page-item disabled"><span class="page-link">...</span></li>
-                            }
-                            <li class="page-item">
-                                <a class="page-link" href="@Url.Action("Index", new { page = Model.TotalPages, sortColumn = Model.SortColumn, sortOrder = Model.SortOrder })">
-                                    @Model.TotalPages
-                                </a>
-                            </li>
-                        }
-
-                        @* 下一頁 *@
-                        <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
-                            <a class="page-link" href="@Url.Action("Index", new { page = Model.CurrentPage + 1, sortColumn = Model.SortColumn, sortOrder = Model.SortOrder })">
-                                下一頁
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
+                @Html.PagedListPager(Model.Transactions,
+                         page => Url.Action("Index", new { page, sortColumn = Model.SortColumn, sortOrder = Model.SortOrder }),
+                         new PagedListRenderOptions
+            {
+                LiElementClasses = new[] { "page-item" },
+                PageClasses = new[] { "page-link" },
+                UlElementClasses = new[] { "pagination", "justify-content-center" },
+                MaximumPageNumbersToDisplay = 5,
+                LinkToFirstPageFormat = "第一頁",
+                LinkToPreviousPageFormat = "上一頁",
+                LinkToNextPageFormat = "下一頁",
+                LinkToLastPageFormat = "最後頁"
+            })
             }
-
-
         </div>
     </div>
+
 
 </div>

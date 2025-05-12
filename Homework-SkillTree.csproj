@@ -10,6 +10,8 @@
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.0-preview1.25120.4" />
+    <PackageReference Include="X.PagedList.EF" Version="10.5.7" />
+    <PackageReference Include="X.PagedList.Mvc.Core" Version="10.5.7" />
   </ItemGroup>
 
 </Project>
