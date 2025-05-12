@@ -1,14 +1,7 @@
-using System.Diagnostics;
-using System.Transactions;
-using X.PagedList; // 確保已引用正確的命名空間
-using X.PagedList.Mvc.Core; // 確保已引用正確的命名空間
-using Homework_SkillTree.Data.Repositories;
 using Homework_SkillTree.Models;
-using Microsoft.AspNetCore.Mvc;
-using X.PagedList.EF;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using X.PagedList.Extensions;
 using Homework_SkillTree.Services;
+using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 
 namespace Homework_SkillTree.Controllers
 {
